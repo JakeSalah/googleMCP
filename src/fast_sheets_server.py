@@ -7,6 +7,7 @@ This is a test server to verify the FastMCP installation works.
 import os
 import json
 import base64
+import logging
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from contextlib import asynccontextmanager
@@ -16,6 +17,13 @@ import uvicorn
 
 # Direct import from mcp.server.fastmcp
 from mcp.server.fastmcp import FastMCP, Context
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("fast_sheets_server")
 
 # Configuration
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -34,11 +42,11 @@ class SpreadsheetContext:
 @asynccontextmanager
 async def spreadsheet_lifespan(server: FastMCP) -> AsyncIterator[SpreadsheetContext]:
     """For test purposes, just yield a minimal context without actually authenticating"""
-    print("Starting spreadsheet server...")
+    logger.info("Starting spreadsheet server...")
     try:
         yield SpreadsheetContext(folder_id=DRIVE_FOLDER_ID)
     finally:
-        print("Shutting down spreadsheet server...")
+        logger.info("Shutting down spreadsheet server...")
 
 # Create the FastMCP server
 mcp = FastMCP(
@@ -51,6 +59,7 @@ mcp = FastMCP(
 @mcp.tool()
 def create_spreadsheet(title: str, sheets: Optional[List[str]] = None, ctx: Context = None) -> Dict[str, Any]:
     """Create a new spreadsheet, optionally within configured Drive folder."""
+    logger.info(f"Creating spreadsheet with title: {title}")
     # Just return a dummy response for testing
     return {
         "success": True,
@@ -63,6 +72,7 @@ def create_spreadsheet(title: str, sheets: Optional[List[str]] = None, ctx: Cont
 @mcp.tool()
 def get_spreadsheet(spreadsheet_id: str, ctx: Context = None) -> Dict[str, Any]:
     """Get a spreadsheet by ID."""
+    logger.info(f"Getting spreadsheet with ID: {spreadsheet_id}")
     # Return dummy response
     return {
         "spreadsheet_id": spreadsheet_id,
@@ -73,13 +83,23 @@ def get_spreadsheet(spreadsheet_id: str, ctx: Context = None) -> Dict[str, Any]:
 
 # Main entry point
 if __name__ == "__main__":
+    # Get port from environment or use default
     port = int(os.environ.get("PORT", 8001))
-    print(f"Starting FastMCP server on port {port}...")
     
-    # For a FastAPI-compatible server, we need to use 'sse' transport 
-    # which will create a Starlette-compatible app internally
+    # Force the correct port for SSE transport
     os.environ["PORT"] = str(port)
-    mcp.run(transport="sse")
+    
+    logger.info(f"Starting FastMCP server on port {port}...")
+    try:
+        # For a FastAPI-compatible server, we need to use 'sse' transport 
+        # which will create a Starlette-compatible app internally
+        mcp.run(transport="sse")
+    except KeyboardInterrupt:
+        logger.info("Server shutdown requested via keyboard interrupt")
+    except Exception as e:
+        logger.error(f"Error running server: {e}", exc_info=True)
+    finally:
+        logger.info("Server stopped")
     
     # Note: You could also use streamable-http transport
     # mcp.run(transport="streamable-http") 
