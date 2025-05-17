@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp_google"
+version = "0.1.0"
+description = "FastMCP implementations for Google services"
+authors = [
+    {name = "Kastly Team", email = "example@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "mcp-server>=0.1.0",
+    "google-auth>=2.0.0",
+    "google-auth-oauthlib>=0.4.0",
+    "google-api-python-client>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+    "flake8>=4.0.0"
+]
+
+[tool.setuptools]
+packages = [
+    "mcp_google_sheets",
+    "mcp_google_drive",
+    "mcp_google_gmail",
+    "mcp_google_calendar",
+    "mcp_google_docs",
+    "mcp_google_meet",
+    "mcp_google_shared"
+]
+
+[project.urls]
+Documentation = "https://example.com/docs"
+Source = "https://github.com/example/mcp_google"
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest]
+testpaths = ["tests"] 
